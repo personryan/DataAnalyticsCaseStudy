@@ -10,12 +10,12 @@ Before diving into the business task, I would like to provide the scenario of th
 ## Source of Dataset
 The data set can be found with this link: https://divvy-tripdata.s3.amazonaws.com/index.html
 I utilised the data from 2023 March to 2022 April which i uploaded to Kaggle:
-
+https://www.kaggle.com/datasets/r2101702/cyclistic-dataset
 
 The licensing of the data can be found here: https://ride.divvybikes.com/data-license-agreement
 
 R Workspace Images can be found in Kaggle as well:
-
+https://www.kaggle.com/datasets/r2101702/cyclistic-r-workspace-images
 
 > Please look at the R Markdown Files created to see what is done with the datasets.
 
