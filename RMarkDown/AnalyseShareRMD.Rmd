@@ -1,0 +1,209 @@
+---
+title: "Analyse and Share RMD"
+author: "Lim Ryan"
+date: "2023-05-04"
+output: html_document
+---
+
+# Set Up
+Before any analysis can be done there are a few things to be set up:
+- Load the data set into R Studio's environment (EDIT path)
+```{r}
+load("D:/Job/Google Case Study/clean_final.RData")
+```
+- Install packages
+```{r}
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+install.packages("tidyverse")
+library(tidyverse)
+```
+
+# Overview
+Analysis will be done for following:
+- Trip Length, Distance against Member Types
+- Member Types, Trip Length, Distance against Rideable Types
+- Day of the Week, member types
+- Location
+
+All of these analysis will provide insights into customer's behaviour. Their similiarties and differences as well as potential opportunities the company can leverage on.
+
+## Trip Length & Distance For Each Member Types
+### Removing outliers
+Finding Q1 and Q3 of the dataset and finding its IQR. 
+From that i can find out the upper and lower quartile to further clean the data
+```{r}
+q1 <- quantile(clean_12_months$trip_length, 0.25)
+q3 <- quantile(clean_12_months$trip_length, 0.75)
+iqr <- q3 - q1
+
+upper <- q3 + 1.5*iqr
+lower <- q1 - 1.5*iqr
+
+clean_12_months <- clean_12_months[clean_12_months$trip_length >= lower & clean_12_months$trip_length <= upper, ]
+```
+
+> After removing outliers I performed the analysis again
+
+```{r fig.width = 10}
+ggplot(clean_12_months, aes(x = trip_length, y = distance, color = member_casual)) +
+  geom_point(size = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  facet_wrap(~ member_casual, ncol = 2)
+  labs(title = "Trip Length vs. Distance by Member Type",
+       x = "Trip Length (minutes)",
+       y = "Distance (metres)",
+       color = "Member Type") +
+  scale_x_continuous(breaks = seq(0, max(clean_12_months$trip_length),5), limits = c(0, max(clean_12_months$trip_length)))
+```
+
+## Trip Length & Distance Against Rideable Type
+
+```{r fig.width = 15}
+ggplot(clean_12_months, aes(x = trip_length, y = distance, color = member_casual)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(color = rideable_type)) +
+  facet_wrap(~ member_casual, ncol = 2) + 
+  labs(title = "Trends for Rideable Type",
+       x = "Trip Length (minutes)",
+       y = "Distance (metres)", 
+       color = "Member & Rideable Types") +
+  scale_x_continuous(breaks = seq(0, max(clean_12_months$trip_length), 5), limits = c(0, max(clean_12_months$trip_length))) +
+  scale_color_manual(values = c("#F8766D","#212A3E","#8294C4", "#ACB1D6", "#00BFC4"))
+```
+
+## Day of the Week Against Member Types
+> Finding average ridership for each day of the week for each member type and riderable type
+
+```{r}
+library(data.table)
+clean_12_months_dt <- setDT(clean_12_months)
+clean_12_months_dt[, day_of_week := factor(recode(day_of_week, "1" = "Sunday", "2" = "Monday", "3" = "Tuesday", "4" = "Wednesday", "5" = "Thursday", "6" = "Friday", "7" = "Saturday"))]
+avg_ridership <- clean_12_months_dt[, .(avg_trip_length = mean(trip_length),
+                                         avg_distance = mean(distance),
+                                         count = .N),
+                                    by = c("day_of_week", "member_casual", "rideable_type")]
+
+
+```
+> Group by only member type and day of the week
+
+```{r}
+avg_ridership_member <- clean_12_months_dt[, .(avg_trip_length = mean(trip_length),
+                                         avg_distance = mean(distance),
+                                         count = .N),
+                                    by = c("day_of_week", "member_casual")]
+```
+
+
+>Analysis based on only day of the week and member type
+
+```{r fig.width = 10}
+avg_ridership_member$day_of_week <- factor(avg_ridership_member$day_of_week, levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+
+ggplot(avg_ridership_member, aes(x = day_of_week, y = count, fill = member_casual)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  facet_wrap(~ member_casual, ncol = 2) + 
+  labs(title = "Trends for Each Day",
+       x = "Day of the week",
+       y = "Amount of Riders")
+
+```
+
+> Analysis based on total average trip length for each member type
+
+```{r}
+ggplot(avg_ridership_member, aes(x = member_casual, y = avg_trip_length, fill = member_casual)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Total Average Trip Length by Member Type",
+       x = "Member Type",
+       y = "Total Average Trip Length") +
+  theme(legend.position = "none")
+
+```
+> Analysis based on total average trip length for each member type
+
+```{r}
+ggplot(avg_ridership_member, aes(x = member_casual, y = avg_distance, fill = member_casual)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Total Average Distance by Member Type",
+       x = "Member Type",
+       y = "Total Average Distance") +
+  theme(legend.position = "none")
+
+```
+> Analyis based on rideable type for each day of the week
+
+```{r fig.width = 10}
+avg_ridership$day_of_week <- factor(avg_ridership$day_of_week, levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+
+ggplot(avg_ridership, aes(x = day_of_week, y = count, fill = rideable_type)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  facet_wrap(~ member_casual, ncol = 2) + 
+  labs(title = "Trends for Each Day",
+       x = "Day of the week",
+       y = "Amount of Riders")
+```
+
+
+
+
+> Analysis based on rideable type for average trip length
+
+```{r}
+ggplot(avg_ridership, aes(x = rideable_type, y = avg_trip_length, fill = rideable_type)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ member_casual, ncol = 2)
+  labs(title = "Total Average Trip Length by Rideable Type",
+       x = "Member Type",
+       y = "Total Average Trip Length") +
+  theme(legend.position = "none")
+
+```
+> Analysis based on rideable type for average trip length
+
+```{r}
+ggplot(avg_ridership, aes(x = rideable_type, y = avg_distance, fill = rideable_type)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ member_casual, ncol = 2)
+  labs(title = "Total Average Distance by Rideable Type",
+       x = "Member Type",
+       y = "Total Average Distance") +
+  theme(legend.position = "none")
+
+```
+## Location for Each Member Type
+> Counting Frequency of Each Location
+
+```{r}
+location_counts <- as.data.frame(table(clean_12_months$start_station_name))
+```
+
+> Finding Top 5 Locations
+
+```{r}
+top_locations <- location_counts %>%
+  arrange(desc(Freq)) %>%
+  slice(1:5)
+```
+
+> Chart to a map
+
+```{r}
+install.packages("leaflet")
+library(leaflet)
+
+locations <- data.frame(location = c("Streeter Dr & Grand Ave", "Wells St & Concord Ln", "DuSable Lake Shore Dr & North Blvd", "Clark St & Elm St", "Kingsbury St & Kinzie St"),
+                        lat = c(41.89203, 42.02824, 41.91021, 41.90269, 41.88962),
+                        lng = c(-87.61282, -87.67483, -87.60788, -87.63032, -87.64414))
+
+# create a leaflet map with markers for each location
+leaflet(locations) %>%
+  addTiles() %>%
+  addMarkers(~lng, ~lat, popup = ~location)
+
+```
+
+
+
+
+

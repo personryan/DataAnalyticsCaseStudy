@@ -1,0 +1,127 @@
+---
+title: "Cleaning RMD"
+author: "Lim Ryan"
+date: "2023-05-04"
+output: html_document
+---
+
+# Cleaning Process in R
+
+Each month's data table is cleaned by doing the following:
+
+- Remove Duplicated Ride Id
+- Remove Inconsistent Started At and Ended At Timings
+- Remove Incomplete Data Rows
+- Validate rideable_type, member_casual Columns
+- Adding day_type Column
+
+The cleaned files will be saved as Format of cleaned data: clean_[yyyy]_[mm]
+
+## Packages to Install
+```{r}
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+install.packages("readxl")
+install.packages("dplyr")
+install.packages("tidyverse")
+install.packages("geosphere")
+
+library(readxl)
+library(dplyr)
+library(tidyverse)
+library(geosphere)
+```
+
+## Combining 12 Months of Historic Data
+> Creating a variable to store the list of files and looping through it to combine the 12 months of historic data
+EDIT PATH LATER
+
+```{r}
+csv_dir <- "D:/Job/Google Case Study/"
+
+csv_files <- list.files(csv_dir, pattern = "\\.csv$")
+all_data <- data.frame()
+for (file in csv_files) {
+  file_path <- file.path(csv_dir, file)
+  data <- read_csv(file_path, col_types = cols())
+  all_data <- bind_rows(all_data, data)
+  }
+```
+
+## Adding Data Frame into Environment
+> Adding all_data frame into a clean_12_months where all the cleaning and manipulation is done
+
+```{r} 
+clean_12_months <- all_data
+```
+
+## Remove Duplicated Ride Id
+> Group by ride id and slicing it by 1 will remove any duplicated ride id
+
+```{r}
+clean_12_months <- clean_12_months %>% 
+     group_by(ride_id) %>% 
+     slice(1)
+```
+	 
+## Removing inconsistent Dates
+> Inconsistent timings: values that are negative or below 1 after "ended_at" - "started_at"
+> Using vectorisation to speed up the processing of huge data
+> Converting to datetime format & adding in a trip_length column
+
+Vectorisation is applying a function or operation to an entire vector or column of data at once, rather than looping through the data row by row.
+
+```{r}
+clean_12_months$started_at <- as.POSIXct(clean_12_months$started_at, format = "%Y-%m-%d %H:%M:%S")
+clean_12_months$ended_at <- as.POSIXct(clean_12_months$ended_at, format = "%Y-%m-%d %H:%M:%S")
+clean_12_months$trip_length <- as.numeric(difftime(clean_12_months$ended_at, clean_12_months$started_at, units = "mins"))
+clean_12_months <-subset(clean_12_months, trip_length >= 1)
+```
+
+## Removing Incomplete Data Rows
+> Any fields with NA will be completely omitted
+```{r}
+clean_12_months <- na.omit(clean_12_months)
+```
+
+## Validate rideable_type, member_casual Columns
+> Contain 3 types of bikes: electric, docked, classic
+> Contain 2 types of people: member, casual
+
+```{r}
+clean_12_months <- clean_12_months %>% 
+  filter(rideable_type %in% c("electric_bike", "docked_bike", "classic_bike")) %>%
+  filter(member_casual %in% c("member", "casual"))
+```
+
+## Validate start_lat, start_lng, end_lat, end_lng Columns
+> Removing those that are 0.0000. It is an impossible value, in the middle of the ocean
+
+```{r}
+clean_12_months <- clean_12_months %>% 
+  filter(start_lat != 0 & start_lng != 0 & end_lat != 0 & end_lng != 0)
+```
+
+## Adding day_type Column
+> Identifying the day of the ride using weekdays function from R
+
+```{r}
+clean_12_months$day_of_week <- as.integer(factor(weekdays(clean_12_months$started_at),
+                                                 levels = c("Sunday", "Monday", "Tuesday",
+                                                            "Wednesday", "Thursday", "Friday",
+                                                            "Saturday")))
+```
+
+## Adding Distance Column
+> Calculating distance using start and end points
+
+```{r}
+clean_12_months$distance <- distHaversine(clean_12_months[c("start_lng", "start_lat")], 
+                                      clean_12_months[c("end_lng", "end_lat")])
+```
+
+## Overview of Cleaned Data
+```{r}
+summary(clean_12_months)
+```
+
+
