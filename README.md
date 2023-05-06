@@ -21,7 +21,11 @@ R Workspace Images are too big to be uploaed on github as there are millions row
 > Please look at the R Markdown Files created to see what is done with the datasets.
 
 ## File Structure
-
->
+- RMarkDown
+  - AnalyseShareRMD
+  - AnalyseShareRMD.Rmd
+  - CleaningRMD
+  - CleaningRMD.Rmd
+- Google_Capstone_Case Study_Cyclistic
 
 
