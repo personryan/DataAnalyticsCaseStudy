@@ -9,14 +9,13 @@ Before diving into the business task, I would like to provide the scenario of th
 
 ## Source of Dataset
 The data set can be found with this link: https://divvy-tripdata.s3.amazonaws.com/index.html
-I utilised the data from 2023 March to 2022 April.
+I utilised the data from 2023 March to 2022 April which i uploaded to Kaggle:
+
 
 The licensing of the data can be found here: https://ride.divvybikes.com/data-license-agreement
 
-R Workspace Images are too big to be uploaed on github as there are millions rows of data:
-![image](https://user-images.githubusercontent.com/90229655/236607444-f8fd9af5-8b46-4196-8c05-085edee959d0.png)
+R Workspace Images can be found in Kaggle as well:
 
-![image](https://user-images.githubusercontent.com/90229655/236607465-672b7da7-021f-471a-b936-cf4b4316fd57.png)
 
 > Please look at the R Markdown Files created to see what is done with the datasets.
 
