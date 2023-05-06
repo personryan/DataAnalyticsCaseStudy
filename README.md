@@ -17,6 +17,10 @@ The licensing of the data can be found here: https://ride.divvybikes.com/data-li
 R Workspace Images can be found in Kaggle as well:
 https://www.kaggle.com/datasets/r2101702/cyclistic-r-workspace-images
 
+The environment will have the following dataframes and variables:
+![image](https://user-images.githubusercontent.com/90229655/236612571-4e59c477-9b92-42b6-be5f-c23701d9fa4b.png)
+
+
 > Please look at the R Markdown Files created to see what is done with the datasets.
 
 ## File Structure
